@@ -1,6 +1,5 @@
 package io.akka.sample.application;
 
-import akka.Done;
 import akka.javasdk.testkit.KeyValueEntityTestKit;
 import io.akka.sample.domain.LobbyState;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,9 +25,7 @@ public class LobbyEntityTest {
         var playerId = "player1";
         var result = testKit.call(entity -> entity.joinLobby(playerId));
 
-        assertEquals(Done.getInstance(), result.getReply());
-
-        var state = testKit.getState();
+        var state = result.getReply();
         assertEquals(Optional.of(playerId), state.player1Id());
         assertTrue(state.player2Id().isEmpty());
     }
@@ -38,9 +35,7 @@ public class LobbyEntityTest {
         testKit.call(entity -> entity.joinLobby("player1"));
         var result = testKit.call(entity -> entity.joinLobby("player2"));
 
-        assertEquals(Done.getInstance(), result.getReply());
-
-        var state = testKit.getState();
+        var state = result.getReply();
         assertEquals(Optional.of("player1"), state.player1Id());
         assertEquals(Optional.of("player2"), state.player2Id());
     }
@@ -54,9 +49,7 @@ public class LobbyEntityTest {
 
         var result = testKit.call(entity -> entity.joinLobby("player3"));
 
-        assertEquals(Done.getInstance(), result.getReply());
-
-        var newState = testKit.getState();
+        var newState = result.getReply();
         assertEquals(Optional.of("player3"), newState.player1Id());
         assertTrue(newState.player2Id().isEmpty());
         assertNotEquals(initialGameId, newState.gameId());

@@ -2,6 +2,8 @@ package io.akka.sample.application;
 
 import akka.Done;
 import akka.javasdk.testkit.EventSourcedTestKit;
+import io.akka.sample.application.GameEntity.MoveRequest;
+import io.akka.sample.application.GameEntity.PlayerIds;
 import io.akka.sample.domain.Game;
 import io.akka.sample.domain.GameEvent;
 import io.akka.sample.domain.GameEvent.*;
@@ -26,7 +28,7 @@ public class GameEntityTest {
         var player1Id = "player1";
         var player2Id = "player2";
 
-        var result = testKit.call(entity -> entity.startGame(player1Id, player2Id));
+        var result = testKit.call(entity -> entity.startGame(new PlayerIds(player1Id, player2Id)));
 
         assertEquals(Done.getInstance(), result.getReply());
 
@@ -40,14 +42,14 @@ public class GameEntityTest {
         var player1Id = "player1";
         var player2Id = "player2";
 
-        testKit.call(entity -> entity.startGame(player1Id, player2Id));
+        testKit.call(entity -> entity.startGame(new PlayerIds(player1Id, player2Id)));
 
         for (int i = 0; i < 2; i++) {
-            testKit.call(entity -> entity.makeMove(player1Id, Move.ROCK));
-            testKit.call(entity -> entity.makeMove(player2Id, Move.SCISSORS));
+            testKit.call(entity -> entity.makeMove(new MoveRequest(player1Id, Move.ROCK)));
+            testKit.call(entity -> entity.makeMove(new MoveRequest(player2Id, Move.SCISSORS)));
         }
 
-        var result = testKit.call(entity -> entity.makeMove(player1Id, Move.ROCK));
+        var result = testKit.call(entity -> entity.makeMove(new MoveRequest(player1Id, Move.ROCK)));
         assertEquals(Done.getInstance(), result.getReply());
 
         var moveMadeEvent = result.getNextEventOfType(MoveMade.class);
@@ -62,7 +64,7 @@ public class GameEntityTest {
     public void testErrorSamePlayers() {
         var playerId = "player1";
 
-        var result = testKit.call(entity -> entity.startGame(playerId, playerId));
+        var result = testKit.call(entity -> entity.startGame(new PlayerIds(playerId, playerId)));
 
         assertTrue(result.isError());
         assertEquals("Cannot start a game with the same player as both participants.", result.getError());
@@ -73,10 +75,10 @@ public class GameEntityTest {
         var player1Id = "player1";
         var player2Id = "player2";
 
-        testKit.call(entity -> entity.startGame(player1Id, player2Id));
-        testKit.call(entity -> entity.makeMove(player1Id, Move.ROCK));
+        testKit.call(entity -> entity.startGame(new PlayerIds(player1Id, player2Id)));
+        testKit.call(entity -> entity.makeMove(new MoveRequest(player1Id, Move.ROCK)));
 
-        var result = testKit.call(entity -> entity.makeMove(player1Id, Move.PAPER));
+        var result = testKit.call(entity -> entity.makeMove(new MoveRequest(player1Id, Move.PAPER)));
 
         assertTrue(result.isError());
         assertEquals("Invalid move order: a player cannot have more than one move more than the other player.", result.getError());

@@ -17,7 +17,14 @@ import static akka.Done.done;
 public class GameEntity extends EventSourcedEntity<Game, GameEvent> {
     private static final Logger logger = LoggerFactory.getLogger(GameEntity.class);
 
-    public Effect<Done> startGame(String player1Id, String player2Id) {
+    public record PlayerIds(String player1Id, String player2Id) {}
+
+    public record MoveRequest(String playerId, Move move) {}
+
+    public Effect<Done> startGame(PlayerIds playerIds) {
+        String player1Id = playerIds.player1Id();
+        String player2Id = playerIds.player2Id();
+
         if (player1Id.equals(player2Id)) {
             return errorSamePlayers();
         } else if (currentState() == null) {
@@ -30,10 +37,13 @@ public class GameEntity extends EventSourcedEntity<Game, GameEvent> {
         }
     }
 
-    public Effect<Done> makeMove(String playerId, Move move) {
+    public Effect<Done> makeMove(MoveRequest moveRequest) {
         if (currentState() == null) {
             return errorNotFound();
         }
+
+        String playerId = moveRequest.playerId();
+        Move move = moveRequest.move();
 
         Game currentGame = currentState();
         int nbrOfPlayer1Moves = currentGame.getFirstPlayerMoves().size();
@@ -55,6 +65,13 @@ public class GameEntity extends EventSourcedEntity<Game, GameEvent> {
             return effects().persist(new MoveMade(playerId, move))
                 .thenReply(__ -> done());
         }
+    }
+
+    public ReadOnlyEffect<Game> getState() {
+        if (currentState() == null) {
+            return errorNotFound();
+        }
+        return effects().reply(currentState());
     }
 
     @Override

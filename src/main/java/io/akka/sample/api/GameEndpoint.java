@@ -8,6 +8,7 @@ import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpResponses;
 import io.akka.sample.application.GameEntity;
+import io.akka.sample.application.LeaderboardView;
 import io.akka.sample.application.LobbyEntity;
 import io.akka.sample.application.PlayerEntity;
 import io.akka.sample.domain.Game.Move;
@@ -37,7 +38,6 @@ public class GameEndpoint {
         int secondPlayerMoveCount,
         Optional<String> winnerId
     ) {}
-
     public record MakeMoveRequest(String playerId, String move) {}
 
     private final ComponentClient componentClient;
@@ -93,8 +93,8 @@ public class GameEndpoint {
                 return new GetGameStateResponse(
                     game.firstPlayerId(),
                     game.secondPlayerId(),
-                    game.getFirstPlayerMoves().stream().limit(completedRounds).map(Move::name).toList(),
-                    game.getSecondPlayerMoves().stream().limit(completedRounds).map(Move::name).toList(),
+                    firstPlayerMoves,
+                    secondPlayerMoves,
                     game.getFirstPlayerScore(),
                     game.getSecondPlayerScore(),
                     completedRounds,
@@ -111,5 +111,19 @@ public class GameEndpoint {
             .method(GameEntity::makeMove)
             .invokeAsync(new GameEntity.MoveRequest(request.playerId(), Move.valueOf(request.move())))
             .thenApply(__ -> HttpResponses.ok());
+    }
+
+    @Get("/leaderboard")
+    public CompletionStage<LeaderboardView.Leaderboard> getLeaderboard() {
+        return componentClient.forView()
+            .method(LeaderboardView::getTopPlayers)
+            .invokeAsync(10);  // Hardcoded to always return top 10 players, could be a query parameter later
+    }
+
+    @Get("/leaderboard/player/{playerId}")
+    public CompletionStage<LeaderboardView.PlayerStats> getPlayerStats(String playerId) {
+        return componentClient.forView()
+            .method(LeaderboardView::getPlayerStats)
+            .invokeAsync(playerId);
     }
 }

@@ -4,12 +4,15 @@ class GameUI {
         this.gameId = '';
         this.lobbyId = 'lobby1';
         this.gamePollingInterval = null;
+        this.leaderboardPollingInterval = null;
         this.setupEventListeners();
+        this.startLeaderboardPolling();
     }
 
     setupEventListeners() {
         document.getElementById('create-player-btn').addEventListener('click', () => this.createPlayer());
         document.getElementById('join-lobby-btn').addEventListener('click', () => this.joinLobby());
+        document.getElementById('new-game-btn').addEventListener('click', () => this.startNewGame());
         document.querySelectorAll('.move-btn').forEach(button => {
             button.addEventListener('click', (e) => this.makeMove(e.target.dataset.move));
         });
@@ -111,6 +114,7 @@ class GameUI {
         const gameStatus = document.querySelector('.game-status p');
         const scoreDiv = document.querySelector('.score');
         const roundsDiv = document.querySelector('.rounds');
+        const gameOverActions = document.getElementById('game-over-actions');
 
         const isPlayer1 = this.playerId === gameState.firstPlayerId;
         const playerMoves = isPlayer1 ? gameState.firstPlayerMoves : gameState.secondPlayerMoves;
@@ -135,9 +139,14 @@ class GameUI {
             gameStatus.textContent = gameState.winnerId === this.playerId ? 'You won!' : 'You lost!';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
             clearInterval(this.gamePollingInterval);
+            // Show game over actions
+            gameOverActions.classList.remove('hidden');
+            // Update leaderboard immediately when game ends
+            this.updateLeaderboard();
         } else if (!gameState.secondPlayerId || gameState.secondPlayerId.length === 0) {
             gameStatus.textContent = 'Waiting for opponent to join...';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
+            gameOverActions.classList.add('hidden');
         } else {
             // Determine if player has already moved this round
             const hasMovedThisRound = playerMoveCount > gameState.completedRounds;
@@ -150,6 +159,7 @@ class GameUI {
                 gameStatus.textContent = hasMovedThisRound ? "Waiting for opponent..." : "Your turn!";
                 document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = hasMovedThisRound);
             }
+            gameOverActions.classList.add('hidden');
         }
     }
 
@@ -164,6 +174,57 @@ class GameUI {
 
     startGamePolling() {
         this.gamePollingInterval = setInterval(() => this.updateGameState(), 1000);
+    }
+
+    async updateLeaderboard() {
+        try {
+            const response = await fetch('/game/leaderboard');
+            if (response.ok) {
+                const leaderboard = await response.json();
+                this.updateLeaderboardUI(leaderboard);
+            }
+        } catch (error) {
+            console.error('Error updating leaderboard:', error);
+        }
+    }
+
+    updateLeaderboardUI(leaderboard) {
+        const leaderboardList = document.getElementById('leaderboard-list');
+        leaderboardList.innerHTML = leaderboard.players
+            .map((player, index) => `
+                <div class="leaderboard-entry">
+                    <div class="leaderboard-position">${index + 1}</div>
+                    <div class="leaderboard-name">${player.playerName}</div>
+                    <div class="leaderboard-score">${player.score.toFixed(1)}</div>
+                    <div class="leaderboard-stats">
+                        ${player.gamesWon}W ${player.gamesLost}L
+                    </div>
+                </div>
+            `)
+            .join('');
+    }
+
+    startLeaderboardPolling() {
+        this.updateLeaderboard();  // Initial update
+        this.leaderboardPollingInterval = setInterval(() => this.updateLeaderboard(), 5000);
+    }
+
+    startNewGame() {
+        // Hide game section and game over actions
+        document.getElementById('game-section').classList.add('hidden');
+        document.getElementById('game-over-actions').classList.add('hidden');
+        // Show lobby section
+        document.getElementById('lobby-section').classList.remove('hidden');
+        // Reset join button
+        const joinButton = document.getElementById('join-lobby-btn');
+        joinButton.disabled = false;
+        joinButton.classList.remove('hidden');
+        // Clear game ID and intervals
+        this.gameId = '';
+        if (this.gamePollingInterval) {
+            clearInterval(this.gamePollingInterval);
+            this.gamePollingInterval = null;
+        }
     }
 }
 

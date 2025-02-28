@@ -121,5 +121,45 @@ public class IntegrationTest extends TestKitSupport {
         });
 
     logger.info("Game completed and statistics updated, Game ID: {}", gameId);
+
+    // Verify leaderboard is updated
+    Awaitility.await()
+        .atMost(5, TimeUnit.SECONDS)
+        .ignoreExceptions()
+        .untilAsserted(() -> {
+          LeaderboardView.Leaderboard leaderboard = await(componentClient.forView()
+              .method(LeaderboardView::getTopPlayers)
+              .invokeAsync(10));
+
+          var players = leaderboard.players().stream()
+              .filter(p -> p.playerId().equals(player1Id) || p.playerId().equals(player2Id))
+              .toList();
+
+          assertEquals(2, players.size());
+
+          var winner = players.stream()
+              .filter(p -> p.playerId().equals(player1Id))
+              .findFirst()
+              .orElseThrow();
+          var loser = players.stream()
+              .filter(p -> p.playerId().equals(player2Id))
+              .findFirst()
+              .orElseThrow();
+
+          assertEquals("Alice", winner.playerName());
+          assertEquals(1, winner.gamesWon());
+          assertEquals(0, winner.gamesLost());
+          assertTrue(winner.score() > 0);
+
+          assertEquals("Bob", loser.playerName());
+          assertEquals(0, loser.gamesWon());
+          assertEquals(1, loser.gamesLost());
+          assertEquals(0.0, loser.score());
+
+          // Winner should be ranked higher than loser
+          assertTrue(winner.score() > loser.score());
+        });
+
+    logger.info("Leaderboard updated successfully");
   }
 }

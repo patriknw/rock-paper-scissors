@@ -31,13 +31,11 @@
     </div>
 
     <div id="game-section" class="section hidden">
-        <div class="game-header">
-            <div class="rounds">Round: 1</div>
-            <div class="score">Score: You 0 - 0 Opponent</div>
-        </div>
         <div class="game-status">
-            <p>Your move!</p>
+            <p>Your turn!</p>
         </div>
+        <div class="score"></div>
+        <div class="rounds"></div>
         <div class="moves">
             <button class="move-btn" data-move="ROCK">✊</button>
             <button class="move-btn" data-move="PAPER">✋</button>
@@ -55,6 +53,14 @@
                 </div>
             </div>
         </div>
+        <div id="game-over-actions" class="hidden">
+            <button id="new-game-btn" class="btn">Play Again</button>
+        </div>
+    </div>
+
+    <div class="section leaderboard">
+        <h2>Leaderboard</h2>
+        <div id="leaderboard-list"></div>
     </div>
 </div>
 <script src="/static/game.js"></script>

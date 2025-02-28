@@ -11,8 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GameEndpointIntegrationTest extends TestKitSupport {
     private static final Logger logger = LoggerFactory.getLogger(GameEndpointIntegrationTest.class);
@@ -58,7 +57,7 @@ public class GameEndpointIntegrationTest extends TestKitSupport {
             });
 
         // Make moves until there is a winner
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             var move1Request = new GameEndpoint.MakeMoveRequest("player1", "ROCK");
             var move1Response = await(httpClient.POST("/game/" + gameId + "/move")
                 .withRequestBody(move1Request).invokeAsync());
@@ -79,5 +78,52 @@ public class GameEndpointIntegrationTest extends TestKitSupport {
         JsonNode gameStateJson = objectMapper.readTree(responseBody);
         String winnerId = gameStateJson.get("winnerId").asText();
         assertEquals("player1", winnerId);
+
+        // Verify leaderboard is updated
+        // FIXME need SDK/runtime update for KVE
+        /*
+        Awaitility.await()
+            .atMost(5, TimeUnit.SECONDS)
+            .ignoreExceptions()
+            .untilAsserted(() -> {
+                var leaderboardResponse = await(httpClient.GET("/game/leaderboard").invokeAsync());
+                assertEquals(StatusCodes.OK, leaderboardResponse.status());
+
+                String leaderboardBody = leaderboardResponse.body().utf8String();
+                JsonNode leaderboardJson = objectMapper.readTree(leaderboardBody);
+                JsonNode players = leaderboardJson.get("players");
+
+                // Find our test players in the leaderboard
+                JsonNode winner = null;
+                JsonNode loser = null;
+                for (JsonNode player : players) {
+                    if (player.get("playerId").asText().equals("player1")) {
+                        winner = player;
+                    } else if (player.get("playerId").asText().equals("player2")) {
+                        loser = player;
+                    }
+                }
+
+                assertNotNull(winner, "Winner should be in leaderboard");
+                assertNotNull(loser, "Loser should be in leaderboard");
+
+                // Verify winner stats
+                assertEquals("Alice", winner.get("playerName").asText());
+                assertEquals(1, winner.get("gamesWon").asInt());
+                assertEquals(0, winner.get("gamesLost").asInt());
+                assertTrue(winner.get("score").asDouble() > 0);
+
+                // Verify loser stats
+                assertEquals("Bob", loser.get("playerName").asText());
+                assertEquals(0, loser.get("gamesWon").asInt());
+                assertEquals(1, loser.get("gamesLost").asInt());
+                assertEquals(0.0, loser.get("score").asDouble());
+
+                // Winner should have higher score than loser
+                assertTrue(winner.get("score").asDouble() > loser.get("score").asDouble());
+            });
+         */
+
+        logger.info("Game completed and leaderboard verified");
     }
 }

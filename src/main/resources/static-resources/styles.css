@@ -93,6 +93,13 @@ input {
     transform: scale(1.1);
 }
 
+.move-btn.selected {
+    background-color: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 .player-moves {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -127,4 +134,58 @@ input {
 
 .game-info {
     text-align: center;
+}
+
+.score, .rounds {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+/* Leaderboard styles */
+.leaderboard {
+    margin-top: var(--spacing);
+}
+
+.leaderboard h2 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing);
+}
+
+#leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.leaderboard-entry {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+}
+
+.leaderboard-position {
+    font-weight: bold;
+    color: var(--primary-color);
+    width: 30px;
+    text-align: center;
+}
+
+.leaderboard-name {
+    font-weight: 500;
+}
+
+.leaderboard-score {
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+.leaderboard-stats {
+    color: var(--text-color);
+    opacity: 0.8;
+    font-size: 0.9rem;
 }

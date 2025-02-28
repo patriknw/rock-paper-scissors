@@ -23,6 +23,48 @@ Rock-Paper-Scissors is a simple hand game played between two people. It's often 
 
 Rock-Paper-Scissors is not just a game of chance; it can involve strategy and quick thinking. Enjoy playing and may the best strategist win!
 
+## Example usage with curl
+
+These `curl` commands demonstrate how to interact with the `GameEndpoint` API. Replace `localhost:9000` with the appropriate host and port if your service is running elsewhere.
+
+### Create a Player
+To create a new player, use the following command:
+```bash
+curl -i -X POST http://localhost:9000/game/player -H "Content-Type: application/json" -d '{"id": "player1", "name": "Alice"}'
+```
+
+### Get Player Information
+To retrieve information about a player, use the following command:
+```bash
+curl -X GET http://localhost:9000/game/player/player1
+```
+
+### Join a Lobby
+To join a lobby, use the following command:
+```bash
+curl -X POST http://localhost:9000/game/lobby/lobby1/join -H "Content-Type: application/json" -d '{"playerId": "player1"}'
+```
+
+```bash
+curl -X POST http://localhost:9000/game/lobby/lobby1/join -H "Content-Type: application/json" -d '{"playerId": "player2"}'
+```
+
+### Get Game State
+To retrieve the current state of a game, use the following command:
+```bash
+curl -X GET http://localhost:9000/game/{gameId}
+```
+
+### Make a Game Move
+To make a move in a game, use the following command:
+```bash
+curl -i -X POST http://localhost:9000/game/{gameId}/move -H "Content-Type: application/json" -d '{"playerId": "player1", "move": "ROCK"}'
+```
+
+
+
+
+
 
 ## Implementation
 

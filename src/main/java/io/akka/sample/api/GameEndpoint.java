@@ -64,6 +64,14 @@ public class GameEndpoint {
             .thenApply(lobbyState -> new JoinLobbyResponse(lobbyState.player1Id(), lobbyState.player2Id(), lobbyState.gameId()));
     }
 
+    @Get("/lobby/{lobbyId}")
+    public CompletionStage<JoinLobbyResponse> getLobbyState(String lobbyId) {
+        return componentClient.forKeyValueEntity(lobbyId)
+            .method(LobbyEntity::getLobby)
+            .invokeAsync()
+            .thenApply(lobbyState -> new JoinLobbyResponse(lobbyState.player1Id(), lobbyState.player2Id(), lobbyState.gameId()));
+    }
+
     @Get("/{gameId}")
     public CompletionStage<GetGameStateResponse> getGameState(String gameId) {
         return componentClient.forEventSourcedEntity(gameId)
@@ -92,6 +100,4 @@ public class GameEndpoint {
             .invokeAsync(new GameEntity.MoveRequest(request.playerId(), Move.valueOf(request.move())))
             .thenApply(__ -> HttpResponses.ok());
     }
-
-
 }

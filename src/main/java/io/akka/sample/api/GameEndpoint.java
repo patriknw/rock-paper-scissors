@@ -27,7 +27,7 @@ public class GameEndpoint {
     public record JoinLobbyResponse(Optional<String> player1Id, Optional<String> player2Id, String gameId) {}
     public record GetGameStateResponse(
         String firstPlayerId,
-        String secondPlayerId,
+        Optional<String> secondPlayerId,
         List<String> firstPlayerMoves,
         List<String> secondPlayerMoves,
         Optional<String> winnerId
@@ -64,14 +64,6 @@ public class GameEndpoint {
             .thenApply(lobbyState -> new JoinLobbyResponse(lobbyState.player1Id(), lobbyState.player2Id(), lobbyState.gameId()));
     }
 
-    @Get("/lobby/{lobbyId}")
-    public CompletionStage<JoinLobbyResponse> getLobbyState(String lobbyId) {
-        return componentClient.forKeyValueEntity(lobbyId)
-            .method(LobbyEntity::getLobby)
-            .invokeAsync()
-            .thenApply(lobbyState -> new JoinLobbyResponse(lobbyState.player1Id(), lobbyState.player2Id(), lobbyState.gameId()));
-    }
-
     @Get("/{gameId}")
     public CompletionStage<GetGameStateResponse> getGameState(String gameId) {
         return componentClient.forEventSourcedEntity(gameId)
@@ -80,7 +72,7 @@ public class GameEndpoint {
             .thenApply(game -> {
                 Optional<String> winnerId = switch (game.evaluateWinner()) {
                     case PLAYER_ONE_WINS -> Optional.of(game.firstPlayerId());
-                    case PLAYER_TWO_WINS -> Optional.of(game.secondPlayerId());
+                    case PLAYER_TWO_WINS -> game.secondPlayerId();
                     default -> Optional.empty();
                 };
                 return new GetGameStateResponse(

@@ -3,14 +3,15 @@ package io.akka.sample.domain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public record Game(
     String firstPlayerId,
-    String secondPlayerId,
+    Optional<String> secondPlayerId,
     List<Move> firstPlayerMoves,
     List<Move> secondPlayerMoves
 ) {
-    public Game(String firstPlayerId, String secondPlayerId) {
+    public Game(String firstPlayerId, Optional<String> secondPlayerId) {
         this(firstPlayerId, secondPlayerId, new ArrayList<>(), new ArrayList<>());
     }
 
@@ -20,7 +21,7 @@ public record Game(
 
         if (playerId.equals(firstPlayerId)) {
             newFirstPlayerMoves.add(move);
-        } else if (playerId.equals(secondPlayerId)) {
+        } else if (secondPlayerId.isPresent() && playerId.equals(secondPlayerId.get())) {
             newSecondPlayerMoves.add(move);
         }
 
@@ -44,6 +45,10 @@ public record Game(
     }
 
     public Result evaluateWinner() {
+        if (secondPlayerId.isEmpty()) {
+            return Result.IN_PROGRESS;
+        }
+
         int firstPlayerScore = 0;
         int secondPlayerScore = 0;
         int rounds = Math.min(firstPlayerMoves.size(), secondPlayerMoves.size());

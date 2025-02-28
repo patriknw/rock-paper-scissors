@@ -1,12 +1,14 @@
 package io.akka.sample.application;
 
 import akka.javasdk.testkit.TestKitSupport;
+import io.akka.sample.domain.Game;
 import io.akka.sample.domain.LobbyState;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,38 +23,52 @@ public class IntegrationTest extends TestKitSupport {
     String player2Id = "player2";
 
     // Join first player to the lobby
-    await(componentClient.forKeyValueEntity(lobbyId)
+    LobbyState lobbyState1 = await(componentClient.forKeyValueEntity(lobbyId)
         .method(LobbyEntity::joinLobby)
         .invokeAsync(player1Id));
 
-    // Join second player to the lobby
-    await(componentClient.forKeyValueEntity(lobbyId)
-        .method(LobbyEntity::joinLobby)
-        .invokeAsync(player2Id));
-
-    // Retrieve the lobby state to get the game ID
-    LobbyState lobbyState = await(componentClient.forKeyValueEntity(lobbyId)
-        .method(LobbyEntity::getLobby)
-        .invokeAsync());
-
-    assertTrue(lobbyState.player1Id().isPresent());
-    assertTrue(lobbyState.player2Id().isPresent());
-
-    String gameId = lobbyState.gameId();
+    // Verify first player and game creation
+    assertTrue(lobbyState1.player1Id().isPresent());
+    assertTrue(lobbyState1.player2Id().isEmpty());
+    String gameId = lobbyState1.gameId();
     assertNotNull(gameId);
 
-    // Verify that a new GameEntity has been created with the correct player IDs
+    // Verify GameEntity is created with only first player
     Awaitility.await()
         .atMost(5, TimeUnit.SECONDS)
         .ignoreExceptions()
         .untilAsserted(() -> {
-      var game = await(componentClient.forEventSourcedEntity(gameId)
-          .method(GameEntity::getState)
-          .invokeAsync());
-      assertEquals(player1Id, game.firstPlayerId());
-      assertEquals(player2Id, game.secondPlayerId());
-    });
+          Game game = await(componentClient.forEventSourcedEntity(gameId)
+              .method(GameEntity::getState)
+              .invokeAsync());
+          assertEquals(player1Id, game.firstPlayerId());
+          assertTrue(game.secondPlayerId().isEmpty());
+        });
 
-    logger.info("GameEntity created successfully with Game ID: {}", gameId);
+    logger.info("GameEntity created with first player, Game ID: {}", gameId);
+
+    // Join second player to the lobby
+    LobbyState lobbyState2 = await(componentClient.forKeyValueEntity(lobbyId)
+        .method(LobbyEntity::joinLobby)
+        .invokeAsync(player2Id));
+
+    // Verify both players are in the lobby
+    assertTrue(lobbyState2.player1Id().isPresent());
+    assertTrue(lobbyState2.player2Id().isPresent());
+    assertEquals(gameId, lobbyState2.gameId());
+
+    // Verify GameEntity is updated with both players
+    Awaitility.await()
+        .atMost(5, TimeUnit.SECONDS)
+        .ignoreExceptions()
+        .untilAsserted(() -> {
+          Game game = await(componentClient.forEventSourcedEntity(gameId)
+              .method(GameEntity::getState)
+              .invokeAsync());
+          assertEquals(player1Id, game.firstPlayerId());
+          assertEquals(Optional.of(player2Id), game.secondPlayerId());
+        });
+
+    logger.info("Second player joined successfully, Game ID: {}", gameId);
   }
 }

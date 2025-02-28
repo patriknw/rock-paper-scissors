@@ -3,7 +3,6 @@ class GameUI {
         this.playerId = '';
         this.gameId = '';
         this.lobbyId = 'lobby1';
-        this.lobbyPollingInterval = null;
         this.gamePollingInterval = null;
         this.setupEventListeners();
     }
@@ -57,41 +56,17 @@ class GameUI {
             if (response.ok) {
                 const data = await response.json();
                 this.gameId = data.gameId;
-                this.startLobbyPolling();
+                this.startGamePolling();
             } else {
-                // If join fails, re-enable the button
                 joinButton.disabled = false;
                 joinButton.classList.remove('hidden');
             }
         } catch (error) {
             console.error('Error joining lobby:', error);
-            // If there's an error, re-enable the button
             const joinButton = document.getElementById('join-lobby-btn');
             joinButton.disabled = false;
             joinButton.classList.remove('hidden');
         }
-    }
-
-    async checkLobbyState() {
-        try {
-            const response = await fetch(`/game/lobby/${this.lobbyId}`);
-            if (response.ok) {
-                const lobbyState = await response.json();
-                if (lobbyState.player1Id && lobbyState.player2Id) {
-                    this.gameId = lobbyState.gameId;
-                    clearInterval(this.lobbyPollingInterval);
-                    document.getElementById('lobby-section').classList.add('hidden');
-                    document.getElementById('game-section').classList.remove('hidden');
-                    this.startGamePolling();
-                }
-            }
-        } catch (error) {
-            console.error('Error checking lobby state:', error);
-        }
-    }
-
-    startLobbyPolling() {
-        this.lobbyPollingInterval = setInterval(() => this.checkLobbyState(), 1000);
     }
 
     async makeMove(move) {
@@ -116,6 +91,12 @@ class GameUI {
             if (response.ok) {
                 const gameState = await response.json();
                 this.updateUI(gameState);
+
+                // Switch to game section when second player joins
+                if (gameState.secondPlayerId && document.getElementById('lobby-section').classList.contains('hidden') === false) {
+                    document.getElementById('lobby-section').classList.add('hidden');
+                    document.getElementById('game-section').classList.remove('hidden');
+                }
             }
         } catch (error) {
             console.error('Error updating game state:', error);
@@ -125,6 +106,7 @@ class GameUI {
     updateUI(gameState) {
         const playerMovesDiv = document.getElementById('player-moves');
         const opponentMovesDiv = document.getElementById('opponent-moves');
+        const gameStatus = document.querySelector('.game-status p');
 
         const isPlayer1 = this.playerId === gameState.firstPlayerId;
         const playerMoves = isPlayer1 ? gameState.firstPlayerMoves : gameState.secondPlayerMoves;
@@ -133,11 +115,19 @@ class GameUI {
         playerMovesDiv.innerHTML = playerMoves.map(move => this.getMoveEmoji(move)).join(' ');
         opponentMovesDiv.innerHTML = opponentMoves.map(move => this.getMoveEmoji(move)).join(' ');
 
+        // Update game status based on game state
         if (gameState.winnerId) {
-            const gameStatus = document.querySelector('.game-status p');
             gameStatus.textContent = gameState.winnerId === this.playerId ? 'You won!' : 'You lost!';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
             clearInterval(this.gamePollingInterval);
+        } else if (!gameState.secondPlayerId) {
+            gameStatus.textContent = 'Waiting for opponent to join...';
+            document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
+        } else {
+            const isMyTurn = (isPlayer1 && playerMoves.length <= opponentMoves.length) ||
+                (!isPlayer1 && playerMoves.length < opponentMoves.length);
+            gameStatus.textContent = isMyTurn ? 'Your turn!' : "Opponent's turn...";
+            document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = !isMyTurn);
         }
     }
 

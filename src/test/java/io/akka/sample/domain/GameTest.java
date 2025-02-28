@@ -3,6 +3,8 @@ package io.akka.sample.domain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
 import static io.akka.sample.domain.Game.Move.*;
 import static io.akka.sample.domain.Game.Result.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,7 +15,7 @@ public class GameTest {
 
     @BeforeEach
     public void setup() {
-        game = new Game("player1", "player2");
+        game = new Game("player1", Optional.of("player2"));
     }
 
     @Test

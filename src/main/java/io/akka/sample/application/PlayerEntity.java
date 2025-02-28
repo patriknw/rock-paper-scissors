@@ -40,5 +40,36 @@ public class PlayerEntity extends KeyValueEntity<Player> {
         }
         return effects().reply(currentState());
     }
-    
+
+    public Effect<Done> gameWon(String gameId) {
+        if (currentState() == null) {
+            return effects().error("Player not found for id '" + commandContext().entityId() + "'");
+        }
+
+        if (currentState().hasRecordedGame(gameId)) {
+            logger.info("Game {} already recorded for player {}", gameId, currentState().id());
+            return effects().reply(done());
+        }
+
+        logger.info("Player {} won game {}", currentState().id(), gameId);
+        return effects()
+            .updateState(currentState().incrementWins(gameId))
+            .thenReply(done());
+    }
+
+    public Effect<Done> gameLost(String gameId) {
+        if (currentState() == null) {
+            return effects().error("Player not found for id '" + commandContext().entityId() + "'");
+        }
+
+        if (currentState().hasRecordedGame(gameId)) {
+            logger.info("Game {} already recorded for player {}", gameId, currentState().id());
+            return effects().reply(done());
+        }
+
+        logger.info("Player {} lost game {}", currentState().id(), gameId);
+        return effects()
+            .updateState(currentState().incrementLosses(gameId))
+            .thenReply(done());
+    }
 }

@@ -93,7 +93,10 @@ public class GameEntity extends EventSourcedEntity<Game, GameEvent> {
             String winnerId = result == Result.PLAYER_ONE_WINS ?
                 updatedGame.firstPlayerId() :
                 updatedGame.secondPlayerId().orElseThrow();
-            return effects().persist(new MoveMade(playerId, move), new GameOver(winnerId))
+            String loserId = result == Result.PLAYER_ONE_WINS ?
+                updatedGame.secondPlayerId().orElseThrow() :
+                updatedGame.firstPlayerId();
+            return effects().persist(new MoveMade(playerId, move), new GameOver(winnerId, loserId))
                 .thenReply(__ -> done());
         } else {
             return effects().persist(new MoveMade(playerId, move))

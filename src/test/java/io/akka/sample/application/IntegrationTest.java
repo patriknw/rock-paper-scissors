@@ -2,7 +2,9 @@ package io.akka.sample.application;
 
 import akka.javasdk.testkit.TestKitSupport;
 import io.akka.sample.domain.Game;
+import io.akka.sample.domain.Game.Move;
 import io.akka.sample.domain.LobbyState;
+import io.akka.sample.domain.Player;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -21,6 +23,15 @@ public class IntegrationTest extends TestKitSupport {
     String lobbyId = "lobby-1";
     String player1Id = "player1";
     String player2Id = "player2";
+
+    // Create players
+    await(componentClient.forKeyValueEntity(player1Id)
+        .method(PlayerEntity::createPlayer)
+        .invokeAsync(new Player(player1Id, "Alice")));
+
+    await(componentClient.forKeyValueEntity(player2Id)
+        .method(PlayerEntity::createPlayer)
+        .invokeAsync(new Player(player2Id, "Bob")));
 
     // Join first player to the lobby
     LobbyState lobbyState1 = await(componentClient.forKeyValueEntity(lobbyId)
@@ -70,5 +81,45 @@ public class IntegrationTest extends TestKitSupport {
         });
 
     logger.info("Second player joined successfully, Game ID: {}", gameId);
+
+    // Play game until player1 wins
+    await(componentClient.forEventSourcedEntity(gameId)
+        .method(GameEntity::makeMove)
+        .invokeAsync(new GameEntity.MoveRequest(player1Id, Move.ROCK)));
+
+    await(componentClient.forEventSourcedEntity(gameId)
+        .method(GameEntity::makeMove)
+        .invokeAsync(new GameEntity.MoveRequest(player2Id, Move.SCISSORS)));
+
+    await(componentClient.forEventSourcedEntity(gameId)
+        .method(GameEntity::makeMove)
+        .invokeAsync(new GameEntity.MoveRequest(player1Id, Move.ROCK)));
+
+    await(componentClient.forEventSourcedEntity(gameId)
+        .method(GameEntity::makeMove)
+        .invokeAsync(new GameEntity.MoveRequest(player2Id, Move.SCISSORS)));
+
+    // Verify game statistics are updated
+    Awaitility.await()
+        .atMost(5, TimeUnit.SECONDS)
+        .ignoreExceptions()
+        .untilAsserted(() -> {
+          Player player1 = await(componentClient.forKeyValueEntity(player1Id)
+              .method(PlayerEntity::getPlayer)
+              .invokeAsync());
+          Player player2 = await(componentClient.forKeyValueEntity(player2Id)
+              .method(PlayerEntity::getPlayer)
+              .invokeAsync());
+
+          assertEquals(1, player1.gamesWon());
+          assertEquals(0, player1.gamesLost());
+          assertTrue(player1.hasRecordedGame(gameId));
+
+          assertEquals(0, player2.gamesWon());
+          assertEquals(1, player2.gamesLost());
+          assertTrue(player2.hasRecordedGame(gameId));
+        });
+
+    logger.info("Game completed and statistics updated, Game ID: {}", gameId);
   }
 }

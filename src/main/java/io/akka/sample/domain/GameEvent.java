@@ -15,5 +15,5 @@ sealed public interface GameEvent {
     record MoveMade(String playerId, Move move) implements GameEvent {}
 
     @TypeName("game-over")
-    record GameOver(String winnerId) implements GameEvent {}
+    record GameOver(String winnerId, String loserId) implements GameEvent {}
 }

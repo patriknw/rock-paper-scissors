@@ -65,6 +65,7 @@ public class GameEntity extends EventSourcedEntity<Game, GameEvent> {
     }
 
     public Effect<Done> makeMove(MoveRequest moveRequest) {
+        logger.info("Making move for player {} with move {}", moveRequest.playerId(), moveRequest.move());
         if (currentState() == null) {
             return errorNotFound();
         }

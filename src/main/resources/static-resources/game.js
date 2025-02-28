@@ -93,7 +93,9 @@ class GameUI {
                 this.updateUI(gameState);
 
                 // Switch to game section when second player joins
-                if (gameState.secondPlayerId && document.getElementById('lobby-section').classList.contains('hidden') === false) {
+                if (gameState.secondPlayerId &&
+                    gameState.secondPlayerId.length > 0 &&
+                    document.getElementById('lobby-section').classList.contains('hidden') === false) {
                     document.getElementById('lobby-section').classList.add('hidden');
                     document.getElementById('game-section').classList.remove('hidden');
                 }
@@ -107,27 +109,47 @@ class GameUI {
         const playerMovesDiv = document.getElementById('player-moves');
         const opponentMovesDiv = document.getElementById('opponent-moves');
         const gameStatus = document.querySelector('.game-status p');
+        const scoreDiv = document.querySelector('.score');
+        const roundsDiv = document.querySelector('.rounds');
 
         const isPlayer1 = this.playerId === gameState.firstPlayerId;
         const playerMoves = isPlayer1 ? gameState.firstPlayerMoves : gameState.secondPlayerMoves;
         const opponentMoves = isPlayer1 ? gameState.secondPlayerMoves : gameState.firstPlayerMoves;
+        const playerScore = isPlayer1 ? gameState.firstPlayerScore : gameState.secondPlayerScore;
+        const opponentScore = isPlayer1 ? gameState.secondPlayerScore : gameState.firstPlayerScore;
+        const playerMoveCount = isPlayer1 ? gameState.firstPlayerMoveCount : gameState.secondPlayerMoveCount;
+        const opponentMoveCount = isPlayer1 ? gameState.secondPlayerMoveCount : gameState.firstPlayerMoveCount;
 
+        // Update moves (only showing completed rounds)
         playerMovesDiv.innerHTML = playerMoves.map(move => this.getMoveEmoji(move)).join(' ');
         opponentMovesDiv.innerHTML = opponentMoves.map(move => this.getMoveEmoji(move)).join(' ');
+
+        // Update score
+        scoreDiv.innerHTML = `Score: You ${playerScore} - ${opponentScore} Opponent`;
+
+        // Update rounds
+        roundsDiv.innerHTML = `Round: ${gameState.completedRounds + 1}`;
 
         // Update game status based on game state
         if (gameState.winnerId) {
             gameStatus.textContent = gameState.winnerId === this.playerId ? 'You won!' : 'You lost!';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
             clearInterval(this.gamePollingInterval);
-        } else if (!gameState.secondPlayerId) {
+        } else if (!gameState.secondPlayerId || gameState.secondPlayerId.length === 0) {
             gameStatus.textContent = 'Waiting for opponent to join...';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
         } else {
-            const isMyTurn = (isPlayer1 && playerMoves.length <= opponentMoves.length) ||
-                (!isPlayer1 && playerMoves.length < opponentMoves.length);
-            gameStatus.textContent = isMyTurn ? 'Your turn!' : "Opponent's turn...";
-            document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = !isMyTurn);
+            // Determine if player has already moved this round
+            const hasMovedThisRound = playerMoveCount > gameState.completedRounds;
+            const isRoundComplete = gameState.completedRounds * 2 === playerMoveCount + opponentMoveCount;
+
+            if (isRoundComplete) {
+                gameStatus.textContent = 'Your turn!';
+                document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+            } else {
+                gameStatus.textContent = hasMovedThisRound ? "Waiting for opponent..." : "Your turn!";
+                document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = hasMovedThisRound);
+            }
         }
     }
 

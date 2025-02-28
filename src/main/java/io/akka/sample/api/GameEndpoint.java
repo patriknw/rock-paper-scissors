@@ -30,8 +30,14 @@ public class GameEndpoint {
         Optional<String> secondPlayerId,
         List<String> firstPlayerMoves,
         List<String> secondPlayerMoves,
+        int firstPlayerScore,
+        int secondPlayerScore,
+        int completedRounds,
+        int firstPlayerMoveCount,
+        int secondPlayerMoveCount,
         Optional<String> winnerId
     ) {}
+
     public record MakeMoveRequest(String playerId, String move) {}
 
     private final ComponentClient componentClient;
@@ -75,11 +81,25 @@ public class GameEndpoint {
                     case PLAYER_TWO_WINS -> game.secondPlayerId();
                     default -> Optional.empty();
                 };
+                int completedRounds = Math.min(game.getFirstPlayerMoves().size(), game.getSecondPlayerMoves().size());
+                List<String> firstPlayerMoves = game.getFirstPlayerMoves().stream()
+                    .limit(completedRounds)
+                    .map(Move::name)
+                    .toList();
+                List<String> secondPlayerMoves = game.getSecondPlayerMoves().stream()
+                    .limit(completedRounds)
+                    .map(Move::name)
+                    .toList();
                 return new GetGameStateResponse(
                     game.firstPlayerId(),
                     game.secondPlayerId(),
-                    game.getFirstPlayerMoves().stream().map(Move::name).toList(),
-                    game.getSecondPlayerMoves().stream().map(Move::name).toList(),
+                    game.getFirstPlayerMoves().stream().limit(completedRounds).map(Move::name).toList(),
+                    game.getSecondPlayerMoves().stream().limit(completedRounds).map(Move::name).toList(),
+                    game.getFirstPlayerScore(),
+                    game.getSecondPlayerScore(),
+                    completedRounds,
+                    game.getFirstPlayerMoves().size(),
+                    game.getSecondPlayerMoves().size(),
                     winnerId
                 );
             });

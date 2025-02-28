@@ -104,4 +104,44 @@ public class GameTest {
         game = game.addMove("player2", PAPER);
         assertEquals(IN_PROGRESS, game.evaluateWinner());
     }
+
+    @Test
+    public void testScoresWithNoSecondPlayer() {
+        game = new Game("player1", Optional.empty());
+        assertEquals(0, game.getFirstPlayerScore());
+        assertEquals(0, game.getSecondPlayerScore());
+    }
+
+    @Test
+    public void testScoresAfterOneRound() {
+        game = game.addMove("player1", ROCK);
+        game = game.addMove("player2", SCISSORS);
+        assertEquals(1, game.getFirstPlayerScore());
+        assertEquals(0, game.getSecondPlayerScore());
+    }
+
+    @Test
+    public void testScoresAfterTie() {
+        game = game.addMove("player1", ROCK);
+        game = game.addMove("player2", ROCK);
+        assertEquals(0, game.getFirstPlayerScore());
+        assertEquals(0, game.getSecondPlayerScore());
+    }
+
+    @Test
+    public void testScoresWithIncompleteRound() {
+        game = game.addMove("player1", ROCK);
+        assertEquals(0, game.getFirstPlayerScore());
+        assertEquals(0, game.getSecondPlayerScore());
+    }
+
+    @Test
+    public void testScoresAfterMultipleRounds() {
+        game = game.addMove("player1", ROCK);
+        game = game.addMove("player2", SCISSORS);
+        game = game.addMove("player1", PAPER);
+        game = game.addMove("player2", ROCK);
+        assertEquals(2, game.getFirstPlayerScore());
+        assertEquals(0, game.getSecondPlayerScore());
+    }
 }

@@ -11,6 +11,8 @@ public record Game(
     List<Move> firstPlayerMoves,
     List<Move> secondPlayerMoves
 ) {
+    private static final int WINNING_SCORE = 2;
+
     public Game(String firstPlayerId, Optional<String> secondPlayerId) {
         this(firstPlayerId, secondPlayerId, new ArrayList<>(), new ArrayList<>());
     }
@@ -36,8 +38,57 @@ public record Game(
         return Collections.unmodifiableList(secondPlayerMoves);
     }
 
+    public int completedRounds() {
+        return Math.min(firstPlayerMoves.size(), secondPlayerMoves.size());
+    }
+
+    private record Scores(int firstPlayerScore, int secondPlayerScore) {}
+
+    private Scores calculateScores() {
+        if (secondPlayerId.isEmpty()) {
+            return new Scores(0, 0);
+        }
+
+        int firstPlayerScore = 0;
+        int secondPlayerScore = 0;
+        int rounds = completedRounds();
+
+        for (int i = 0; i < rounds; i++) {
+            Move firstPlayerMove = firstPlayerMoves.get(i);
+            Move secondPlayerMove = secondPlayerMoves.get(i);
+
+            if (firstPlayerMove == secondPlayerMove) {
+                continue; // It's a tie for this round
+            }
+
+            if (firstPlayerMove.beats(secondPlayerMove)) {
+                firstPlayerScore++;
+            } else {
+                secondPlayerScore++;
+            }
+        }
+
+        return new Scores(firstPlayerScore, secondPlayerScore);
+    }
+
+    public int getFirstPlayerScore() {
+        return calculateScores().firstPlayerScore();
+    }
+
+    public int getSecondPlayerScore() {
+        return calculateScores().secondPlayerScore();
+    }
+
     public enum Move {
-        ROCK, PAPER, SCISSORS
+        ROCK, PAPER, SCISSORS;
+    
+        public boolean beats(Move other) {
+            return switch (this) {
+                case ROCK -> other == SCISSORS;
+                case PAPER -> other == ROCK;
+                case SCISSORS -> other == PAPER;
+            };
+        }
     }
 
     public enum Result {
@@ -51,43 +102,21 @@ public record Game(
 
         int firstPlayerScore = 0;
         int secondPlayerScore = 0;
-        int rounds = Math.min(firstPlayerMoves.size(), secondPlayerMoves.size());
+        int rounds = completedRounds();
 
         for (int i = 0; i < rounds; i++) {
             Move firstPlayerMove = firstPlayerMoves.get(i);
             Move secondPlayerMove = secondPlayerMoves.get(i);
 
-            if (firstPlayerMove == secondPlayerMove) {
-                continue; // It's a tie for this round
+            if (firstPlayerMove.beats(secondPlayerMove)) {
+                firstPlayerScore++;
+            } else if (secondPlayerMove.beats(firstPlayerMove)) {
+                secondPlayerScore++;
             }
 
-            switch (firstPlayerMove) {
-                case ROCK:
-                    if (secondPlayerMove == Move.SCISSORS) {
-                        firstPlayerScore++;
-                    } else {
-                        secondPlayerScore++;
-                    }
-                    break;
-                case PAPER:
-                    if (secondPlayerMove == Move.ROCK) {
-                        firstPlayerScore++;
-                    } else {
-                        secondPlayerScore++;
-                    }
-                    break;
-                case SCISSORS:
-                    if (secondPlayerMove == Move.PAPER) {
-                        firstPlayerScore++;
-                    } else {
-                        secondPlayerScore++;
-                    }
-                    break;
-            }
-
-            if (firstPlayerScore == 2) {
+            if (firstPlayerScore == WINNING_SCORE) {
                 return Result.PLAYER_ONE_WINS;
-            } else if (secondPlayerScore == 2) {
+            } else if (secondPlayerScore == WINNING_SCORE) {
                 return Result.PLAYER_TWO_WINS;
             }
         }

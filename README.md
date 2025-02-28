@@ -1,10 +1,27 @@
 # ROCK-PAPER-SCISSORS
 
-Rock-Paper-Scissors is a game played to settle disputes between two people. Thought to be a game of chance that depends on random luck similar to flipping coins or drawing straws, the game is often taught to children to help them settle arguments between themselves on their own without adult intervention. However, the game actually can be a game that has an element of skill that requires quick thinking and perceptive reasoning.1
+## How to play ROCK-PAPER-SCISSORS
 
-The game is played with three possible hand signals that represent a rock, paper, and scissors. The rock is a closed fist; paper is a flat hand with fingers and thumb extended and the palm facing downward; and scissors is a fist with the index and middle fingers fully extended toward the opposing player. Rock wins against scissors; paper wins against rock; and scissors wins against paper. If both players throw the same hand signal, it is considered a tie, and play resumes until there is a clear winner.
+Rock-Paper-Scissors is a simple hand game played between two people. It's often used to make a quick decision or settle a dispute. The game involves three possible hand signals:
 
-The hand signals are given simultaneously by both players. The ritual used to get players in sync with each other so they can deliver their throws simultaneously is called the prime. This action requires retracting the player’s fist from full-arm extension towards the shoulder and then back to full extension. To ensure a fair match the players must be in sync with their primes. Players must determine before play how many times they pump their arms during the prime phase, usually two or three times before the final delivery of their throw.
+- **Rock**: A closed fist.
+- **Paper**: An open hand with fingers extended.
+- **Scissors**: A fist with the index and middle fingers extended, forming a V.
+
+### Game Rules
+
+1. **Objective**: Each player chooses one of the three hand signals. The winner is determined by the following rules:
+    - Rock crushes Scissors.
+    - Paper covers Rock.
+    - Scissors cut Paper.
+
+2. **Tie**: If both players choose the same hand signal, the game is a tie, and players must play again.
+
+3. **Gameplay**: Players count to three in unison and then simultaneously show their chosen hand signal. This is often accompanied by a chant like "Rock, Paper, Scissors, Shoot!"
+
+4. **Winning the Game**: The game can be played in rounds, and the first player to win two rounds is declared the overall winner.
+
+Rock-Paper-Scissors is not just a game of chance; it can involve strategy and quick thinking. Enjoy playing and may the best strategist win!
 
 
 ## Implementation

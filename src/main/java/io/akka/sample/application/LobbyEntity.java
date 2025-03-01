@@ -21,11 +21,17 @@ public class LobbyEntity extends KeyValueEntity<LobbyState> {
 
     public Effect<LobbyState> joinLobby(String playerId) {
         LobbyState currentState = currentState();
+
         LobbyState updatedState;
         if (currentState.player1Id().isEmpty()) {
             logger.info("Player {} is joining an empty lobby.", playerId);
             updatedState = currentState.withPlayer1(playerId);
         } else if (currentState.player2Id().isEmpty()) {
+            // Check if trying to join as second player when already first player
+            if (currentState.player1Id().get().equals(playerId)) {
+                logger.warn("Player {} attempted to join as second player", playerId);
+                return effects().error("Cannot join as both players");
+            }
             logger.info("Player {} is joining the lobby with player {}.", playerId, currentState.player1Id().get());
             updatedState = currentState.withPlayer2(playerId);
         } else {

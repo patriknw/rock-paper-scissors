@@ -310,3 +310,8 @@ Without context about Akka SDK it started out with Akka libraries or older versi
 > Agile: Akka allows for updates, rebalancing, and repartitioning of workloads, enabling no-downtime maintenance.
 > Resilient: Akka applications function as self-managed in-memory databases, ensuring recoverability and replicability to handle potential failures.
 
+### Bug fix
+
+> We need to validate that the first and second players are not the same when joining the lobby. Reply with error if that is the case.
+
+> In the GameConsumer we need to ignore the change if the LobbyState contains the same player as both player one and two 
